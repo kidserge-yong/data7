@@ -1,0 +1,87 @@
+classdef smk
+    %SMK Summary of this class goes here
+    %   Detailed explanation goes here
+    
+    properties
+        serial;
+        is_start;
+        iemg;
+        emg;
+        trigger;
+    end
+    
+    methods
+        function obj = smk(port)
+            %SMK Construct an instance of this class
+            %   Detailed explanation goes here
+            if nargin < 1   % no port given
+                ports = serialportlist
+                select = input("Select serial port for SMK EMG array device: ");
+                port = ports(select);
+            end
+            BAUDRATE = 460800;
+            byteorder = 'little-endian';
+            obj.serial = serialport(port, BAUDRATE, 'ByteOrder', byteorder, 'DataBits', 8);
+        end
+        
+        function obj = startIEMG(obj)
+            %"""
+            %intial iemg data transmittion from smk array system.
+            %return 1 if no problem found
+            %"""
+            command = "AT+IEMGSTRT\r\n";
+            obj.sendCommand(command);
+            obj.is_start = True;
+            
+        end
+        
+        function obj = startEMG(obj)
+            %"""
+            %intial emg data transmittion from smk array system.
+            %return 1 if no problem found
+            %"""
+            command = "AT+EMGSTRT\r\n";
+            obj.sendCommand(command);
+            obj.is_start = true;
+        end
+        
+        function obj = stop(obj)
+            %METHOD1 Summary of this method goes here
+            %   Detailed explanation goes here
+            command = "AT+EMGSTRT\r\n";
+            obj.sendCommand(command);
+            obj.is_start = false;
+        end
+        
+        function obj = loaddata(obj)
+            if obj.is_start ~= true
+                return
+            end
+            
+            start_byte = 0;
+            while start_byte ~= uint8(113) || start_byte ~= uint8(116)  %Loop to find start of emg (116) or iemg (113)
+                if obj.serial.NumBytesAvailable > 0
+                    start_byte = read(obj.serial, 1, "uint8");
+                end
+            end
+            
+            data_byte = read(obj.serial, 68, "uint8");
+            % 1 byte -> order 0 to 255
+            % 2 to 65 byte -> 2 bytes per data from 1 channel (32 channels)
+            % 66 to 68 byte -> 3 bytes for trigger
+            if start_byte == uint8(113)
+                obj.iemg = typecast(uint8(data_byte(2:65)), 'uint16');
+            elseif start_byte == uint8(116)
+                obj.emg = typecast(uint8(data_byte(2:65)), 'uint16');
+            end
+            
+        end
+        
+        function sendCommand(obj, command)
+            %This function send command to the robot via buffer or serial
+            %port
+            writeline(obj.serial, command);
+        end
+    end
+end
+
