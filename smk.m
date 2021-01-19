@@ -24,12 +24,18 @@ classdef smk
             end
             BAUDRATE = 460800;
             byteorder = 'little-endian';
+            
+            % Set object properties
             obj.serial = serialport(port, BAUDRATE, 'ByteOrder', byteorder, 'DataBits', 8);
             obj.is_start = false;
             obj.is_newdata = false;
             obj.iemg = 0;
             obj.emg = 0;
             obj.trigger = 0;
+            
+            % Set callback function
+            configureCallback(obj.serial, "byte", 69*10, @updatecallback)
+            
         end
         
         function obj = startIEMG(obj)
@@ -113,8 +119,10 @@ classdef smk
             % 2 to 65 byte -> 2 bytes per data from 1 channel (32 channels)
             % 66 to 68 byte -> 3 bytes for trigger
             if start_byte == uint8(113)
+                obj.emg = [];
                 obj.iemg = typecast(uint8(data_byte(2:65)), 'uint16');
             elseif start_byte == uint8(116)
+                obj.iemg = [];
                 obj.emg = typecast(uint8(data_byte(2:65)), 'uint16');
             end
             obj.trigger = data_byte(66:68);
@@ -122,6 +130,9 @@ classdef smk
         end
         
         function [obj, EMG, iEMG] = getEMG(obj)
+            if obj.serial.NumBytesAvailable > 0
+                obj = obj.loaddata();
+            end
             
             EMG = obj.emg;
             iEMG = obj.iemg;
@@ -137,3 +148,7 @@ classdef smk
     end
 end
 
+function updatecallback(src, ~)
+    read(src, 69*5, "uint8");
+
+end

@@ -15,9 +15,16 @@ s = s.startIEMG();
 % Start transfer IEMG data, setting will NOT effect this
 pause(0.5);
 
-s = s.loaddata();
+EMGarray = [];
+iEMGarray = [];
+t0 = clock;
+while etime(clock, t0) < 10
+  [s, EMG, iEMG] = s.getEMG();
+  EMGarray = [EMGarray; EMG];
+  iEMGarray = [iEMGarray; iEMG];
+end
 % Load data into model keep call this to update the data
-pause(0.5);
+
 
 s = s.stop();
 % Stop transfer data
