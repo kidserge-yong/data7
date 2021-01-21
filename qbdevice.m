@@ -3,9 +3,14 @@ classdef qbdevice
     %   Detailed explanation goes here
     
     properties
-        Is_useserial;
+        is_useserial;
+        
         id;
         serial;
+        
+        log;
+        position;
+        current;
     end
     
     methods
@@ -22,11 +27,12 @@ classdef qbdevice
                 BAUDRATE = 2000000;
                 byteorder = 'little-endian';
                 obj.serial = serialport(port, BAUDRATE, 'ByteOrder', byteorder, 'DataBits', 8);
-                obj.Is_useserial = true;
+                obj.is_useserial = true;
                 buffer = [];
             end
             obj.id = id;
             obj.serial = port;
+            obj.log = [];
             
         end
         
@@ -49,15 +55,20 @@ classdef qbdevice
             obj.sendCommand(command);
         end
         
+        function getPing(obj)
+            command = obj.commandConstructor(0);
+            obj.sendCommand(command);
+        end
+        
         function setPosition(obj, position)
             data = [uint8(fix(position / 256)), uint8(mod(position, 256)), uint8(fix(position / 256)), uint8(mod(position, 256))];
-            command = obj.commandConstructor(130, true, char(data))
+            command = obj.commandConstructor(130, true, char(data));
             obj.sendCommand(command);
         end
         
         function setPS(obj, position, stiffness)
             data = [uint8(fix(position / 256)), uint8(mod(position, 256)), uint8(fix(stiffness / 256)), uint8(mod(stiffness, 256))];
-            command = obj.commandConstructor(135, true, char(data))
+            command = obj.commandConstructor(135, true, char(data));
             obj.sendCommand(command);
         end
         
@@ -92,7 +103,7 @@ classdef qbdevice
         function command = commandConstructor(obj, command_value, checksum, data)
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
-            fprintf('%d\n', nargin)
+            % fprintf('%d\n', nargin)
             if nargin < 4 % No data
                 com_str = [char(command_value), char(command_value)];
             else
@@ -116,6 +127,42 @@ classdef qbdevice
             end
             
         end
+        
+        function obj = updateData(obj, data)
+            % data = '::[device_id][data_length][data][checksum]'
+            data = strrep(data, '::', '');
+            
+            if length(data) < 3    % return in case not enough data
+                obj.log = [obj.log; convertCharsToStrings(data)];
+                return             
+            end
+            
+            if data(1) ~= char(obj.id)  % return in case id is not match
+                obj.log = [obj.log; convertCharsToStrings(data)];
+                return
+            end
+            
+            if uint8(obj.checksum(data(3:end))) ~= 0     % return in case checksum is not match
+                obj.log = [obj.log; convertCharsToStrings(data)];
+                return
+            end
+            
+            if 128 <= data(3) && data(3) <= 146     % return if command is not in command range (128 to 146)
+                command = data(3);
+            else
+                obj.log = [obj.log; convertCharsToStrings(data)];
+                return
+            end
+            
+            data_value = data(4:end-1);
+            value = typecast(uint8(data_value), 'uint16');
+            
+            if command == 132
+                obj.position = value;
+            elseif command == 133
+                obj.current = value;
+            end
+        end
     end
     
     methods ( Access = private )
@@ -138,4 +185,6 @@ classdef qbdevice
     end
     
 end
+
+
 

@@ -27,6 +27,7 @@ classdef smk
             
             % Set object properties
             obj.serial = serialport(port, BAUDRATE, 'ByteOrder', byteorder, 'DataBits', 8);
+            obj.serial.Timeout = 0.001;
             obj.is_start = false;
             obj.is_newdata = false;
             obj.iemg = 0;
