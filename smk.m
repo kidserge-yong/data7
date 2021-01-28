@@ -27,7 +27,7 @@ classdef smk
             
             % Set object properties
             obj.serial = serialport(port, BAUDRATE, 'ByteOrder', byteorder, 'DataBits', 8);
-            obj.serial.Timeout = 0.001;
+            obj.serial.Timeout = 0.1;
             obj.is_start = false;
             obj.is_newdata = false;
             obj.iemg = 0;
@@ -83,11 +83,15 @@ classdef smk
             %METHOD1 Summary of this method goes here
             %   Detailed explanation goes here
             %"AT+EMGCONFIG=FFFFFFFF,2000\r\n"
-            command = string(['AT+EMGCONFIG=FFFFFFFF,2000', char(13), newline]);
+            command = string(['AT+EMGCONFIG=FFFFFFFF,250', char(13), newline]);
             obj.sendCommand(command);
         end
         
         function obj_setting = check_setting(obj)
+            if obj.is_start == true
+                obj_setting = "Stop the data stream before check setting.";
+                return
+            end
             if obj.serial.NumBytesAvailable > 0
                 read(obj.serial, obj.serial.NumBytesAvailable, "uint8");    %Empty memory
             end
@@ -109,30 +113,52 @@ classdef smk
             end
             
             start_byte = 0;
-            while start_byte ~= uint8(113) && start_byte ~= uint8(116)  %Loop to find start of emg (116) or iemg (113)
+            while (start_byte ~= uint8(113)) && (start_byte ~= uint8(116))  %Loop to find start of emg (116) or iemg (113)
                 if obj.serial.NumBytesAvailable > 0
                     start_byte = read(obj.serial, 1, "uint8");
                 end
             end
             
-            data_byte = read(obj.serial, 68, "uint8");
-            % 1 byte -> order 0 to 255
-            % 2 to 65 byte -> 2 bytes per data from 1 channel (32 channels)
-            % 66 to 68 byte -> 3 bytes for trigger
+            data_byte = read(obj.serial, 69, "uint8");
+
+            if length(data_byte) < 69
+                return
+            end
+            
+            % 1 package have 70 bytes (0 to 69)
+            
+            % 0 byte -> 116 for EMG, 113 for iEMG
+            % 1 byte -> 141 for EMG, 188 for iEMG
+            % 2 byte -> order 0 to 255
+            % 3 to 66 byte -> 2 bytes per data from 1 channel (32 channels)
+            % 67 to 69 byte -> 3 bytes for trigger
             if start_byte == uint8(113)
                 obj.emg = [];
-                obj.iemg = typecast(uint8(data_byte(2:65)), 'uint16');
+                obj.iemg = data_byte(3:2:66) * 256 + data_byte(4:2:66);
+                %obj.iemg = typecast(uint8(data_byte(3:66)), 'uint16');
             elseif start_byte == uint8(116)
                 obj.iemg = [];
-                obj.emg = typecast(uint8(data_byte(2:65)), 'uint16');
+                obj.emg = data_byte(3:2:66) * 256 + data_byte(4:2:66);
+                
+                for n = 1 : length(obj.emg)
+                    if obj.emg(n) > 32767
+                        obj.emg(n) = obj.emg(n) - 65535;
+                    end
+                end
+                %obj.emg = typecast(uint8(data_byte(3:66)), 'int16');
             end
-            obj.trigger = data_byte(66:68);
+            obj.trigger = data_byte(67:69);
             obj.is_newdata = true;
         end
         
         function [obj, EMG, iEMG] = getEMG(obj)
             if obj.serial.NumBytesAvailable > 0
                 obj = obj.loaddata();
+            end
+            if obj.is_newdata == false
+                EMG = [];
+                iEMG = [];
+                return
             end
             
             EMG = obj.emg;

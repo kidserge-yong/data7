@@ -15,14 +15,17 @@ s = s.startIEMG();
 % Start transfer IEMG data, setting will NOT effect this
 pause(0.5);
 
-EMGarray = [];
+fprintf("Start collect iEMG data")
+
 iEMGarray = [];
 t0 = clock;
 while etime(clock, t0) < 10
   [s, EMG, iEMG] = s.getEMG();
-  EMGarray = [EMGarray; EMG];
   iEMGarray = [iEMGarray; iEMG];
+  pause(0.01);
 end
+
+fprintf("Finish collect iEMG data")
 % Load data into model keep call this to update the data
 
 
@@ -48,10 +51,24 @@ s = s.startEMG();
 % Start transfer EMG data, setting will effect this
 pause(0.5);
 
-s = s.loaddata();
+fprintf("Start collect EMG data")
+
+EMGarray = [];
+t0 = clock;
+while etime(clock, t0) < 10
+  [s, EMG, iEMG] = s.getEMG();
+  EMGarray = [EMGarray; EMG];
+  pause(0.01);
+end
+
+fprintf("Finish collect EMG data")
+% 
+% s = s.loaddata();
 % Load data into model keep call this to update the data
 pause(0.5);
 
 s = s.stop();
 % Stop transfer data
 pause(0.5);
+s.check_setting()
+%delete(s.serial)
