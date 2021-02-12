@@ -32,6 +32,7 @@ while etime(clock, t0) < 10
         iEMGarray(i,:) = iEMG;
     end
     
+    
 
     qb = qb.updateData();
 %   Posarray = [Posarray; qb.deviceArray(1, 3).position];
