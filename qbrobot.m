@@ -94,6 +94,12 @@ classdef qbrobot
             end
         end
         
+        function activate(obj, activate)
+            for target_id = 1:length(obj.deviceArray)
+                obj.deviceArray(target_id).activate(activate)
+            end
+        end
+        
 
     end
 end
