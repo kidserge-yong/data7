@@ -3,6 +3,9 @@ qb = qbrobot();
 %2
 pause(0.5);
 
+qb.activate(true);
+pause(0.5);
+
 qb= qb.start_autoupdate();
 % Start loop for send command to update position and current of each device
 %
@@ -10,6 +13,9 @@ pause(0.5);
 
 % Call 
 qb = qb.updateData();
+
+qb.setPS(1,9000,10000);
+
 
 Posarray = [];
 Curarray = [];

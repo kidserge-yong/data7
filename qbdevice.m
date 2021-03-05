@@ -67,7 +67,8 @@ classdef qbdevice
         end
         
         function setPS(obj, position, stiffness)
-            data = [uint8(fix(position / 256)), uint8(mod(position, 256)), uint8(fix(stiffness / 256)), uint8(mod(stiffness, 256))];
+            data = [int8(fix(position / 256)), int8(mod(position, 256)), int8(fix(stiffness / 256)), int8(mod(stiffness, 256))];
+            data = typecast(data, 'uint8');
             command = obj.commandConstructor(135, true, char(data));
             obj.sendCommand(command);
         end

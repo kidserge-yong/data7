@@ -128,7 +128,7 @@ classdef smk
             % 1 package have 70 bytes (0 to 69)
             
             % 0 byte -> 116 for EMG, 113 for iEMG
-            % 1 byte -> 141 for EMG, 188 for iEMG
+            % 1 byte -> time 0 to 255
             % 2 byte -> order 0 to 255
             % 3 to 66 byte -> 2 bytes per data from 1 channel (32 channels)
             % 67 to 69 byte -> 3 bytes for trigger

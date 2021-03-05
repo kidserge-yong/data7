@@ -73,7 +73,7 @@ classdef qbrobot
             if obj.deviceArray(id).id == 1
                 obj.deviceArray(id).setPosition(position);
             else
-                obj.deviceArray(id).setPosition(position, stiffness);
+                obj.deviceArray(id).setPS(position, stiffness);
             end
             outputArg = 1;
         end
@@ -91,6 +91,12 @@ classdef qbrobot
                 subdata = cell2mat(data(i));
                 target_id = subdata(1);
                 obj.deviceArray(target_id) = obj.deviceArray(target_id).updateData(subdata);
+            end
+        end
+        
+        function activate(obj, activate)
+            for target_id = 1:length(obj.deviceArray)
+                obj.deviceArray(target_id).activate(activate)
             end
         end
         
