@@ -18,7 +18,7 @@ dbstop if error
         for i = 1:size(data,1)
             error = abs((data(i, j) - prev));
 
-            if error < tol * (missing_count/10 + 1) % increase tol range 
+            if error < tol %* (missing_count/10 + 1) % increase tol range 
                 if missing_count > 0
                     range = data(i, j) - prev;
                     step = range / missing_count;   % missing_count least is 1

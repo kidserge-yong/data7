@@ -4,6 +4,7 @@ function result = inframeQuat(Quat1, Quat2)
 % result time x 4 quaternion of Quat2 framed by Quat1
 % Use quat2eul to convert to eul
 
+
 %% CONDITION CHECK
 assert(size(Quat1,1) == size(Quat2,1), "The size of Quat1 and Quat2 is not equal")
 assert(size(Quat1,2) == size(Quat2,2), "The size of Quat1 and Quat2 is not equal")
@@ -14,25 +15,26 @@ assert(size(Quat1,2) == size(Quat2,2), "The size of Quat1 and Quat2 is not equal
 % Quat2 = rigid_arr{2,1}(:,4:7);
 
 %% Setup the primary quaternion to be (1,0,0,0)
-Fs = 200;
+% Fs = 200;
 % M8 = mean(Quat2(ceil(Fs*0.001):round(1.5*Fs),:));
-if size(Quat1,1) > 1
-M9 = mean(Quat1(ceil(Fs*0.001):round(1.5*Fs),:));
-for i = 1:length(Quat1)
-Quat1(i,:) = Cross_Multiply(Quat1(i,:),QuatConj(M9));
-end
-end
+% if size(Quat1,1) > 1
+%     M9 = mean(Quat1(ceil(Fs*0.001):round(1.5*Fs),:));
+%     for i = 1:length(Quat1)
+%         Quat1(i,:) = Cross_Multiply(Quat1(i,:),QuatConj(M9));
+%     end
+% end
 % gain = QuatConj(Cross_Multiply(QuatConj(M9),M8));
 
 
 %% Calculate inframe quaternion
 nQuat2 = zeros(size(Quat1));
 for i = 1:size(Quat2,1)
-nQuat2(i,:) = Cross_Multiply(Quat2(i,:),QuatConj(Quat1(i,:)));
+    nQuat2(i,:) = Cross_Multiply(Quat2(i,:),QuatConj(Quat1(i,:)));
 end
+
 tmp = nQuat2(1,:);
 for i = 1:size(Quat2,1)
-nQuat2(i,:) = Cross_Multiply(nQuat2(i,:),QuatConj(tmp));
+    nQuat2(i,:) = Cross_Multiply(nQuat2(i,:),QuatConj(tmp));
 end
 
 result = nQuat2;

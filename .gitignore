@@ -1,3 +1,7 @@
 /data/*
 smk.asv
 /thirdparty/*
+IEMG.csv
+EMG.csv
+*.csv
+*.asv
